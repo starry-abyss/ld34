@@ -1,39 +1,31 @@
 package;
 
 import flixel.FlxG;
-import flixel.FlxSprite;
-import flixel.FlxState;
-import flixel.text.FlxText;
-import flixel.ui.FlxButton;
-//import flixel.util.FlxMath;
 
 /**
- * A FlxState which can be used for the game's menu.
+ * A FlxState which can be used for the actual gameplay.
  */
-class MenuState extends FlxState
+class MenuState extends PlayState
 {
-	/**
-	 * Function that is called up when to state is created to set it up.
-	 */
 	override public function create():Void
 	{
+		setLevelName("assets/data/info.png");
+		
 		super.create();
+		
+		flushWater();
 	}
 
-	/**
-	 * Function that is called when this state is destroyed - you might want to
-	 * consider setting all objects this state uses to null to help garbage collection.
-	 */
 	override public function destroy():Void
 	{
 		super.destroy();
 	}
 
-	/**
-	 * Function that is called once every frame.
-	 */
 	override public function update(elapsed: Float):Void
-	{
+	{	
+		if (FlxG.keys.anyPressed(["A", "LEFT", "D", "RIGHT"]))
+			FlxG.switchState(new PlayState());
+			
 		super.update(elapsed);
 	}
 }

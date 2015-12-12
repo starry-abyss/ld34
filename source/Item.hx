@@ -14,7 +14,7 @@ class Item extends FlxSprite
 	{
 		super(x, y);
 		
-		makeGraphic(5, 5, FlxColor.YELLOW);
+		loadGraphic("assets/images/item.png", false, 8, 8);
 	}
 	
 	//public function

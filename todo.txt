@@ -3,6 +3,13 @@
 + collision
 + jumping
 + button and island growing
-- graphics
-- bug: under item always the empty tile
++ graphics
+- scale 2x or more
+- save and revive on the last item taken
+- hero animation
+- item take animation (rays or something)
+- monster in water at level center, then at level end. to overcome, flush the water =)
+- hero redraw?
+- bug: if I take a new item when water flush not finished, the water level is broken
++ bug: under item always the empty tile
 - bug: jump and move while falling
