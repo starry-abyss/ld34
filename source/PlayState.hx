@@ -7,8 +7,10 @@ import flixel.FlxState;
 import flixel.FlxObject;
 import flixel.tile.FlxTilemap;
 import flixel.tweens.FlxTween;
+import flixel.tweens.FlxEase;
 import flixel.util.FlxStringUtil;
 import openfl.Assets;
+import flixel.util.FlxTimer;
 //import flixel.util.FlxMath;
 
 /**
@@ -24,14 +26,19 @@ class PlayState extends FlxState
 	var level: FlxTilemap;
 	var background: FlxSprite;
 	
-	var timeLeftPressed: Float = Math.NEGATIVE_INFINITY;
+	/*var timeLeftPressed: Float = Math.NEGATIVE_INFINITY;
 	var timeRightPressed: Float = Math.NEGATIVE_INFINITY;
-	var timeJumpStarted: Float = Math.NEGATIVE_INFINITY;
+	var timeJumpStarted: Float = Math.NEGATIVE_INFINITY;*/
+	//var timerLeftPressed: FlxTimer;
+	//var timerRightPressed: FlxTimer;
+	var timerJump: FlxTimer;
 	var jumping: Bool = false;
 	
 	var jumpTween: FlxTween;
-	var jumpLength: Float = 0.3;
+	var jumpLength: Float = 0.1;
 	var jumpHeight: Float = 10.0;
+	
+	var moveDelta: Float = 0;
 	 
 	override public function create():Void
 	{
@@ -40,7 +47,7 @@ class PlayState extends FlxState
 		player = new FlxSprite();
 		player.makeGraphic(5, 5, 0xFFFFFFFF);
 		
-		//player.acceleration.y = 1000;
+		player.acceleration.y = 1000;
 		
 		
 		//var backgroundImage: FlxSprite = new FlxSprite();
@@ -64,6 +71,10 @@ class PlayState extends FlxState
 		
 		FlxG.camera.follow(player, PLATFORMER);
 		
+		//timerLeftPressed = new FlxTimer();
+		//timerRightPressed = new FlxTimer();
+		timerJump = new FlxTimer();
+		
 		//jumpTween = new FlxTween();
 	}
 
@@ -78,16 +89,22 @@ class PlayState extends FlxState
 	
 	function jumpTweenEnded(tween: FlxTween):Void
 	{
-		stopJump();
+		if (jumpTween.backward)
+			stopJump();
 	}
 	
-	function startJump(elapsed: Float):Void
+	function startJump():Void
 	{
 		trace("jump start");
 		
-		jumping = true;
-		jumpTween = FlxTween.tween(player, { y: player.y - jumpHeight }, jumpLength, { onComplete: jumpTweenEnded} );
-		timeJumpStarted = elapsed;
+		if (!jumping)
+		{
+			jumping = true;
+			jumpTween = FlxTween.tween(player, { y: player.y - jumpHeight }, jumpLength, { onComplete: jumpTweenEnded, type:FlxTween.PINGPONG, ease:FlxEase.quadInOut } );
+			//timeJumpStarted = FlxGame.;
+			/*timerJump.active = true;
+			timerJump.start();*/
+		}
 	}
 	
 	function stopJump():Void
@@ -96,7 +113,8 @@ class PlayState extends FlxState
 		
 		if (jumping)
 		{
-			timeJumpStarted = Math.NEGATIVE_INFINITY;
+			//timeJumpStarted = Math.NEGATIVE_INFINITY;
+			//timerJump.active = false;
 			jumping = false;
 			jumpTween.cancel();
 		}
@@ -107,48 +125,70 @@ class PlayState extends FlxState
 	 */
 	override public function update(elapsed: Float):Void
 	{
-		var moveDelta: Float = 0;
-		var speed: Float = 2.0;
-		var jumpThreshold: Float = 0.5;
+		var speed: Float = 1.0;
+		var jumpThreshold: Float = 0.2;
+		
+		//var notGoingToJump: Bool = false;
 		
 		if (!jumping)
 		{
+			moveDelta = 0;
+			
 			if (FlxG.keys.anyPressed(["A", "LEFT"]))
 			{
-				timeLeftPressed = elapsed;
+				if (FlxG.keys.anyJustPressed(["A", "LEFT"]))
+					timerJump.start(jumpThreshold);
+					
+				//notGoingToJump = ;
+				//timeLeftPressed = elapsed;
+				
 				moveDelta -= speed;
 			}
 			else
 			{
-				if (elapsed - timeLeftPressed <= jumpThreshold)
+				//if (elapsed - timeLeftPressed <= jumpThreshold)
+				if (FlxG.keys.anyJustReleased(["A", "LEFT"]))
 				{
-					startJump(elapsed);
-					moveDelta -= speed;
-					timeLeftPressed = Math.NEGATIVE_INFINITY;
+					if (timerJump.active && !timerJump.finished)
+					{
+						startJump();
+						moveDelta -= speed;
+						//timeLeftPressed = Math.NEGATIVE_INFINITY;
+						timerJump.active = false;
+					}
 				}
 			}
-			
+
 			if (FlxG.keys.anyPressed(["D", "RIGHT"]))
 			{
-				timeRightPressed = elapsed;
+				if (FlxG.keys.anyJustPressed(["D", "RIGHT"]))
+					timerJump.start(jumpThreshold);
+					
+				//timeRightPressed = elapsed;
+				//timerJump.start(jumpThreshold);
 				moveDelta += speed;
 			}
 			else
 			{
-				if (elapsed - timeRightPressed <= jumpThreshold)
+				if (FlxG.keys.anyJustReleased(["D", "RIGHT"]))
 				{
-					startJump(elapsed);
-					moveDelta += speed;
-					timeRightPressed = Math.NEGATIVE_INFINITY;
+					//if (elapsed - timeRightPressed <= jumpThreshold)
+					if (timerJump.active && !timerJump.finished)
+					{
+						startJump();
+						moveDelta += speed;
+						//timeRightPressed = Math.NEGATIVE_INFINITY;
+						timerJump.active = false;
+					}
 				}
 			}
 		}
 		else
 		{
-			if (elapsed - timeJumpStarted >= jumpLength)
+			/*if (elapsed - timeJumpStarted >= jumpLength)
 			{
 				stopJump();
-			}
+			}*/
 		}
 		
 		
@@ -163,7 +203,7 @@ class PlayState extends FlxState
 		
 		/*if (jumping == false)
 		{
-			timeJumpStarted = Math.NEGATIVE_INFINITY;
+			timeJumpStarted = Math.NEGATIVE_INFINITY;dasdw
 			jumpTween.;
 		}*/
 		//FlxG.pixelPerfect
