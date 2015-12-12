@@ -1,0 +1,5 @@
++ hero
++ level
++ collision
+- jumping
+- button and island growing
