@@ -1,5 +1,8 @@
 + hero
 + level
 + collision
-- jumping
-- button and island growing
++ jumping
++ button and island growing
+- graphics
+- bug: under item always the empty tile
+- bug: jump and move while falling

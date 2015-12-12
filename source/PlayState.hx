@@ -5,6 +5,8 @@ import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.FlxState;
 import flixel.FlxObject;
+import flixel.group.FlxGroup;
+import flixel.math.FlxPoint;
 import flixel.tile.FlxTilemap;
 import flixel.tweens.FlxTween;
 import flixel.tweens.FlxEase;
@@ -24,7 +26,9 @@ class PlayState extends FlxState
 	
 	var player: FlxSprite;
 	var level: FlxTilemap;
-	var background: FlxSprite;
+	var water: FlxTilemap;
+	var background: FlxBackdrop;
+	var itemGroup: FlxGroup;
 	
 	/*var timeLeftPressed: Float = Math.NEGATIVE_INFINITY;
 	var timeRightPressed: Float = Math.NEGATIVE_INFINITY;
@@ -35,10 +39,17 @@ class PlayState extends FlxState
 	var jumping: Bool = false;
 	
 	var jumpTween: FlxTween;
-	var jumpLength: Float = 0.1;
-	var jumpHeight: Float = 10.0;
+	static inline var jumpLength: Float = 0.1;
+	static inline var jumpHeight: Float = 10.0;
 	
 	var moveDelta: Float = 0;
+	
+	static inline var tileSize: Int = 8;
+	
+	static inline var levelGrowHeight: Float = tileSize * 3;
+	static inline var levelGrowLength: Float = 1.5;
+	
+	static inline var waterReserve: Int = 100;
 	 
 	override public function create():Void
 	{
@@ -57,19 +68,62 @@ class PlayState extends FlxState
 		background.scrollFactor.x = 0.5;
 		background.scrollFactor.y = 0.5;
 		
-		var levelColors: Array<Int> = [ 0x7dc1ff, 0x9e5400 ];
+		var levelColors: Array<Int> = [ 0x7dc1ff, 0x9e5400, 0xfff740, 0x4c2b06 ];
 		level = new FlxTilemap();
 		var bitMapData = Assets.getBitmapData("assets/data/level.png");
-		level.loadMapFromCSV(FlxStringUtil.bitmapToCSV(bitMapData, false, 1, levelColors), "assets/images/tileset.png", 8, 8);
+		level.loadMapFromCSV(FlxStringUtil.bitmapToCSV(bitMapData, false, 1, levelColors), "assets/images/tileset.png", tileSize, tileSize);
 		
+		// empty
 		level.setTileProperties(0, FlxObject.NONE);
+		// ground
 		level.setTileProperties(1, FlxObject.ANY);
+		// item placeholder
+		level.setTileProperties(2, FlxObject.NONE);
+		// underground
+		level.setTileProperties(3, FlxObject.NONE);
+		
+		itemGroup = new FlxGroup();
+		
+		var itemPosArray: Array<FlxPoint> = level.getTileCoords(2);
+		if (itemPosArray != null)
+		{
+			for (itemPos in itemPosArray)
+			{
+				itemGroup.add(new Item(itemPos.x, itemPos.y));
+				trace("item: " + itemPos.x + " " + itemPos.y);
+			}
+		}
+		
+		player.x = level.width / 2;
+		player.y = 0;
+
+		
+		water = new FlxTilemap();
+		water.x = -waterReserve * tileSize;
+		water.y = 56 + tileSize / 2;
+		
+		var waterCSV: String = "";
+		for (y in -waterReserve...waterReserve)
+		{
+			for (x in -waterReserve...waterReserve)
+			{
+				waterCSV += (if (y == -waterReserve) 16 else 17);
+				if (x < waterReserve) waterCSV += ",";
+			}
+			waterCSV += "\n";
+		}
+		water.loadMapFromCSV(waterCSV, "assets/images/tileset.png", tileSize, tileSize);
+		
+		trace("item: " + player.x + " " + player.y);
 		
 		add(background);
 		add(level);
 		add(player);
+		add(itemGroup);
+		add(water);
 		
-		FlxG.camera.follow(player, PLATFORMER);
+		FlxG.camera.follow(player, PLATFORMER, null, 4);
+		updateCameraBounds();
 		
 		//timerLeftPressed = new FlxTimer();
 		//timerRightPressed = new FlxTimer();
@@ -118,6 +172,45 @@ class PlayState extends FlxState
 			jumping = false;
 			jumpTween.cancel();
 		}
+	}
+	
+	function pickupItem(who: FlxObject, what: FlxObject): Bool
+	{
+		what.destroy();
+		growLevel();
+		
+		return true;
+	}
+	
+	function updateCameraBounds():Void
+	{
+		FlxG.camera.setScrollBounds( -waterReserve * tileSize, waterReserve * tileSize, 0, water.y + levelGrowHeight);
+	}
+	
+	function growLevel():Void
+	{
+		trace("growing level");
+		
+		FlxTween.tween(water, { y: water.y + levelGrowHeight }, levelGrowLength, { onComplete: growLevelEnded, onUpdate: growLevelEnded, type:FlxTween.ONESHOT } );
+		FlxG.camera.shake(0.01, levelGrowLength);
+		
+		updateCameraBounds();
+	}
+	
+	function growLevelEnded(tween: FlxTween):Void
+	{
+		updateCameraBounds();
+	}
+	
+	function inWater(who: FlxObject, what: FlxObject): Bool
+	{
+		restartLevel();
+		return true;
+	}
+	
+	function restartLevel():Void
+	{
+		FlxG.switchState(new PlayState());
 	}
 
 	/**
@@ -194,7 +287,10 @@ class PlayState extends FlxState
 		
 		player.x += moveDelta;
 		
+		FlxG.overlap(player, itemGroup, null, pickupItem);
 		
+		FlxG.overlap(player, water, null, inWater);
+
 		if (FlxG.collide(player, level))
 		{
 			//jumping = false;
@@ -207,6 +303,11 @@ class PlayState extends FlxState
 			jumpTween.;
 		}*/
 		//FlxG.pixelPerfect
+		
+		/*FlxG.camera.x = player.x;
+		FlxG.camera.y = water.y;*/
+		
+		//FlxG.collide(FlxG.camera, water);
 		
 		super.update(elapsed);
 	}
