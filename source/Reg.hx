@@ -33,5 +33,6 @@ class Reg
 	 * Generic bucket for storing different FlxSaves.
 	 * Especially useful for setting up multiple save slots.
 	 */
-	public static var saves:Array<FlxSave> = [];
+	//public static var saves:Array<FlxSave> = [];
+	public static var save:FlxSave = new FlxSave();
 }

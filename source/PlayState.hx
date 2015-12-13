@@ -9,9 +9,11 @@ import flixel.FlxState;
 import flixel.FlxObject;
 import flixel.group.FlxGroup;
 import flixel.math.FlxPoint;
+import flixel.system.FlxSound;
 import flixel.tile.FlxTilemap;
 import flixel.tweens.FlxTween;
 import flixel.tweens.FlxEase;
+import flixel.util.FlxDestroyUtil;
 import flixel.util.FlxStringUtil;
 import openfl.Assets;
 import flixel.util.FlxTimer;
@@ -38,6 +40,12 @@ class PlayState extends FlxState
 		water.y = tileSize * 58;
 		updateCameraBounds();
 	}
+	
+	function movePlayer(x: Float, y: Float):Void
+	{
+		player.x = x;
+		player.y = y;
+	}
 
 	var player: FlxSprite;
 	var level: FlxTilemap;
@@ -51,9 +59,12 @@ class PlayState extends FlxState
 	//var timerLeftPressed: FlxTimer;
 	//var timerRightPressed: FlxTimer;
 	var timerJump: FlxTimer;
+	var timerEndgame: FlxTimer;
+	
 	var jumping: Bool = false;
 	
-	var jumpTween: FlxTween;
+	var jumpTween: FlxTween = null;
+	var waterTween: FlxTween = null;
 	static inline var jumpLength: Float = 0.1;
 	static inline var jumpHeight: Float = 10.0;
 	
@@ -65,15 +76,34 @@ class PlayState extends FlxState
 	static inline var levelGrowLength: Float = 1.5;
 	
 	static inline var waterReserve: Int = 100;
+	
+	var soundItemtake: FlxSound;
+	var soundBossattack1: FlxSound;
+	var soundBossattack2: FlxSound;
+	var soundBossdeath: FlxSound;
+	var soundRevive: FlxSound;
 	 
 	override public function create():Void
 	{
 		super.create();
 		
+		Reg.save.bind("save1");
+		
 		player = new FlxSprite();
-		player.loadGraphic("assets/images/player.png", false, 5, 5);
+		player.loadGraphic("assets/images/player.png", true, 5, 5);
+		player.animation.add("idle", [0], 30, true, false, false);
+		player.animation.add("leftjump", [3], 30, true, true, false);
+		player.animation.add("rightjump", [3], 30, true, false, false);
+		player.animation.add("left", [1, 2], 4, true, true, false);
+		player.animation.add("right", [1, 2], 4, true, false, false);
 		
 		player.acceleration.y = 1000;
+		
+		soundItemtake = FlxG.sound.load("assets/sounds/itemtake.wav");
+		soundBossattack1 = FlxG.sound.load("assets/sounds/bossattack1.wav");
+		soundBossattack2 = FlxG.sound.load("assets/sounds/bossattack2.wav");
+		soundBossdeath = FlxG.sound.load("assets/sounds/bossdeath.wav");
+		soundRevive = FlxG.sound.load("assets/sounds/revive.wav");
 		
 		
 		//var backgroundImage: FlxSprite = new FlxSprite();
@@ -83,7 +113,7 @@ class PlayState extends FlxState
 		background.scrollFactor.x = 0.5;
 		background.scrollFactor.y = 0.5;
 		
-		var levelColors: Array<Int> = [ 0x7dc1ff, 0x9e5400, 0xfff740, 0x4c2b06, 0xfd0003, 0x0e0904, 0x8c8c8c, 0xefffe7, 0x196800, 0x8aff50, 0xe67a00, 0x7c5400 ];
+		var levelColors: Array<Int> = [ 0x7dc1ff, 0x9e5400, 0xfff740, 0x4c2b06, 0xfd0003, 0x0e0904, 0x8c8c8c, 0xefffe7, 0x196800, 0x8aff50, 0xe67a00, 0x7c5400, 0x9e7a00 ];
 		level = new FlxTilemap();
 		var bitMapData = Assets.getBitmapData(levelName);
 		level.loadMapFromCSV(FlxStringUtil.bitmapToCSV(bitMapData, false, 1, levelColors), "assets/images/tileset.png", tileSize, tileSize);
@@ -113,6 +143,8 @@ class PlayState extends FlxState
 		level.setTileProperties(10, FlxObject.ANY);
 		// ground (lower)
 		level.setTileProperties(11, FlxObject.ANY);
+		// ground (variant)
+		level.setTileProperties(12, FlxObject.ANY);
 		
 		itemGroup = new FlxGroup();
 		
@@ -176,8 +208,10 @@ class PlayState extends FlxState
 		//timerLeftPressed = new FlxTimer();
 		//timerRightPressed = new FlxTimer();
 		timerJump = new FlxTimer();
+		timerEndgame = new FlxTimer();
 		
 		//jumpTween = new FlxTween();
+		saveGame();
 	}
 
 	/**
@@ -186,6 +220,12 @@ class PlayState extends FlxState
 	 */
 	override public function destroy():Void
 	{
+		FlxDestroyUtil.destroy(soundItemtake);
+		FlxDestroyUtil.destroy(soundBossattack1);
+		FlxDestroyUtil.destroy(soundBossattack2);
+		FlxDestroyUtil.destroy(soundBossdeath);
+		FlxDestroyUtil.destroy(soundRevive);
+		
 		super.destroy();
 	}
 	
@@ -197,7 +237,7 @@ class PlayState extends FlxState
 	
 	function startJump():Void
 	{
-		trace("jump start");
+		//trace("jump start");
 		
 		if (!jumping)
 		{
@@ -211,7 +251,7 @@ class PlayState extends FlxState
 	
 	function stopJump():Void
 	{
-		trace("jump stop");
+		//trace("jump stop");
 		
 		if (jumping)
 		{
@@ -224,7 +264,16 @@ class PlayState extends FlxState
 	
 	function pickupItem(who: FlxObject, what: FlxObject): Bool
 	{
+		itemGroup.remove(what);
 		what.destroy();
+		
+		soundItemtake.play();
+		
+		// save the future after-tween state and then revert
+		water.y += levelGrowHeight;
+		saveGame();
+		water.y -= levelGrowHeight;
+		
 		growLevel();
 		
 		return true;
@@ -239,7 +288,7 @@ class PlayState extends FlxState
 	{
 		trace("growing level");
 		
-		FlxTween.tween(water, { y: water.y + levelGrowHeight }, levelGrowLength, { onComplete: growLevelEnded, onUpdate: growLevelEnded, type:FlxTween.ONESHOT } );
+		waterTween = FlxTween.tween(water, { y: water.y + levelGrowHeight }, levelGrowLength, { onComplete: growLevelEnded, onUpdate: growLevelEnded, type:FlxTween.ONESHOT } );
 		FlxG.camera.shake(0.01, levelGrowLength, null, true, X);
 		
 		updateCameraBounds();
@@ -258,7 +307,64 @@ class PlayState extends FlxState
 	
 	function restartLevel():Void
 	{
-		FlxG.switchState(new PlayState());
+		//FlxG.switchState(new PlayState());
+		soundRevive.play();
+		loadGame();
+	}
+	
+	function endGame(timer: FlxTimer):Void
+	{
+		FlxG.switchState(new EndState());
+	}
+	
+	function saveGame():Void
+	{
+		trace("save game");
+		
+		Reg.save.data.playerX = player.x;
+		Reg.save.data.playerY = player.y;
+		Reg.save.data.waterY = water.y;
+		
+		var itemPosArray: Array<FlxPoint> = new Array<FlxPoint>();
+		for (item in itemGroup)
+		{
+			var sprite: FlxSprite = cast(item, FlxSprite);
+			itemPosArray.push(new FlxPoint(sprite.x, sprite.y));
+		}
+		Reg.save.data.itemPosArray = itemPosArray;
+		
+		Reg.save.flush();
+	}
+	
+	function loadGame():Void
+	{
+		trace("load game");
+		
+		soundBossattack1.stop();
+		soundBossattack2.stop();
+		soundBossdeath.stop();
+		soundItemtake.stop();
+		
+		moveDelta = 0.0;
+		if (jumpTween != null) jumpTween.cancel();
+		if (waterTween != null) waterTween.cancel();
+		FlxG.camera.stopFX();
+		
+		for (item in itemGroup)
+		{
+			item.destroy();
+		}
+		itemGroup.clear();
+		
+		var itemPosArray: Array<FlxPoint> = Reg.save.data.itemPosArray;
+		for (itemPos in itemPosArray)
+		{
+			itemGroup.add(new Item(itemPos.x, itemPos.y));
+		}
+		
+		water.y = Reg.save.data.waterY;
+		updateCameraBounds();
+		movePlayer(Reg.save.data.playerX, Reg.save.data.playerY);
 	}
 
 	/**
@@ -323,9 +429,16 @@ class PlayState extends FlxState
 					}
 				}
 			}
+			
+			if (Math.abs(moveDelta) < 0.01)
+				player.animation.play("idle");
+			else
+				player.animation.play(if (moveDelta > 0) "right" else "left");
 		}
 		else
 		{
+			player.animation.play(if (moveDelta > 0) "rightjump" else "leftjump");
+			
 			/*if (elapsed - timeJumpStarted >= jumpLength)
 			{
 				stopJump();
@@ -333,17 +446,22 @@ class PlayState extends FlxState
 		}
 		
 		
+		/*if (FlxG.keys.anyPressed(["F5"]))
+			saveGame();
+		if (FlxG.keys.anyPressed(["F6"]))
+			loadGame();*/
+		
 		player.x += moveDelta;
 		
 		FlxG.overlap(player, itemGroup, null, pickupItem);
-		
-		FlxG.overlap(player, water, null, inWater);
 
 		if (FlxG.collide(player, level))
 		{
 			//jumping = false;
 			//stopJump();
 		}
+		
+		FlxG.overlap(player, water, null, inWater);
 		
 		/*if (jumping == false)
 		{
@@ -356,6 +474,9 @@ class PlayState extends FlxState
 		FlxG.camera.y = water.y;*/
 		
 		//FlxG.collide(FlxG.camera, water);
+		
+		if (itemGroup.countLiving() == 0)
+			timerEndgame.start(4.0, endGame);
 		
 		super.update(elapsed);
 	}

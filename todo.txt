@@ -4,12 +4,19 @@
 + jumping
 + button and island growing
 + graphics
-- scale 2x or more
-- save and revive on the last item taken
-- hero animation
-- item take animation (rays or something)
-- monster in water at level center, then at level end. to overcome, flush the water =)
-- hero redraw?
-- bug: if I take a new item when water flush not finished, the water level is broken
++ save and revive on the last item taken
++ hero animation
++ bug: if I fall from high, and water is almost at ground level, I can collide with water on landing and die :/
 + bug: under item always the empty tile
++ [test] end condition
+- scale 2x or more
+- !!! [fixes a bug] item take animation (rays or something) & make player wait until water, animation and camera finish
+- revive animation
+- boss in water at level center, then at level end. to overcome, flush the water =) sounds of boss
+- music (separate one for boss)
+- noticeable delay when taking item
+- add tiles inside ground
+- bug: if I take a new item when water flush not finished, the water level is broken
 - bug: jump and move while falling
+- birds
+- moving clouds
