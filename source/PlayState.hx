@@ -9,7 +9,9 @@ import flixel.FlxState;
 import flixel.FlxObject;
 import flixel.group.FlxGroup;
 import flixel.math.FlxPoint;
+import flixel.math.FlxRect;
 import flixel.system.FlxSound;
+import flixel.system.scaleModes.PixelPerfectScaleMode;
 import flixel.tile.FlxTilemap;
 import flixel.tweens.FlxTween;
 import flixel.tweens.FlxEase;
@@ -48,10 +50,15 @@ class PlayState extends FlxState
 	}
 
 	var player: FlxSprite;
+	var revivor: FlxSprite;
 	var level: FlxTilemap;
 	var water: FlxTilemap;
 	var background: FlxBackdrop;
 	var itemGroup: FlxGroup;
+	var bossGroup: FlxGroup;
+	var bulletGroup: FlxGroup;
+	
+	var disableControls: Bool = false;
 	
 	/*var timeLeftPressed: Float = Math.NEGATIVE_INFINITY;
 	var timeRightPressed: Float = Math.NEGATIVE_INFINITY;
@@ -78,10 +85,10 @@ class PlayState extends FlxState
 	static inline var waterReserve: Int = 100;
 	
 	var soundItemtake: FlxSound;
-	var soundBossattack1: FlxSound;
-	var soundBossattack2: FlxSound;
 	var soundBossdeath: FlxSound;
 	var soundRevive: FlxSound;
+	
+	var weHaveSavegame: Bool = false;
 	 
 	override public function create():Void
 	{
@@ -100,11 +107,13 @@ class PlayState extends FlxState
 		player.acceleration.y = 1000;
 		
 		soundItemtake = FlxG.sound.load("assets/sounds/itemtake.wav");
-		soundBossattack1 = FlxG.sound.load("assets/sounds/bossattack1.wav");
-		soundBossattack2 = FlxG.sound.load("assets/sounds/bossattack2.wav");
 		soundBossdeath = FlxG.sound.load("assets/sounds/bossdeath.wav");
 		soundRevive = FlxG.sound.load("assets/sounds/revive.wav");
 		
+		revivor = new FlxSprite();
+		revivor.loadGraphic("assets/images/revive.png", true, 40, 40);
+		revivor.animation.finishCallback = reviveAnimationEnded;
+		revivor.animation.add("revive", [0, 1, 2, 3], 3, false, false, false);
 		
 		//var backgroundImage: FlxSprite = new FlxSprite();
 		//backgroundImage.makeGraphic(10, 10, 0x7dc1ff);
@@ -113,7 +122,7 @@ class PlayState extends FlxState
 		background.scrollFactor.x = 0.5;
 		background.scrollFactor.y = 0.5;
 		
-		var levelColors: Array<Int> = [ 0x7dc1ff, 0x9e5400, 0xfff740, 0x4c2b06, 0xfd0003, 0x0e0904, 0x8c8c8c, 0xefffe7, 0x196800, 0x8aff50, 0xe67a00, 0x7c5400, 0x9e7a00 ];
+		var levelColors: Array<Int> = [ 0x7dc1ff, 0x9e5400, 0xfff740, 0x4c2b06, 0xfd0003, 0x0e0904, 0x8c8c8c, 0xefffe7, 0x196800, 0x8aff50, 0xe67a00, 0x7c5400, 0x9e7a00, 0xc52eca ];
 		level = new FlxTilemap();
 		var bitMapData = Assets.getBitmapData(levelName);
 		level.loadMapFromCSV(FlxStringUtil.bitmapToCSV(bitMapData, false, 1, levelColors), "assets/images/tileset.png", tileSize, tileSize);
@@ -145,6 +154,8 @@ class PlayState extends FlxState
 		level.setTileProperties(11, FlxObject.ANY);
 		// ground (variant)
 		level.setTileProperties(12, FlxObject.ANY);
+		// boss placeholder
+		level.setTileProperties(13, FlxObject.NONE);
 		
 		itemGroup = new FlxGroup();
 		
@@ -194,14 +205,34 @@ class PlayState extends FlxState
 		
 		trace("item: " + player.x + " " + player.y);
 		
+		bulletGroup = new FlxGroup();
+		
+		bossGroup = new FlxGroup();
+		//bossGroup.add(new Boss(350, 35, bulletGroup));
+		
+				
+		var bossPosArray: Array<FlxPoint> = new Array<FlxPoint>();
+		var bossPosArray1: Array<FlxPoint> = level.getTileCoords(13, true);
+		if (bossPosArray1 != null) bossPosArray = bossPosArray.concat(bossPosArray1);
+		
+		for (bossPos in bossPosArray)
+		{
+			bossGroup.add(new Boss(bossPos.x - 10, bossPos.y - 20, bulletGroup));
+			trace("boss: " + bossPos.x + " " + bossPos.y);
+		}
+		
 		add(background);
 		add(level);
 		add(player);
 		add(itemGroup);
+		add(bossGroup);
+		add(bulletGroup);
 		add(water);
 		
 		//FlxG.camera.zoom = 2;
 		
+		//FlxG.camera.bgColor = 0x7dc1ff;
+		FlxG.scaleMode = new PixelPerfectScaleMode();
 		FlxG.camera.follow(player, PLATFORMER, null, 4);
 		updateCameraBounds();
 		
@@ -210,8 +241,14 @@ class PlayState extends FlxState
 		timerJump = new FlxTimer();
 		timerEndgame = new FlxTimer();
 		
+		FlxG.worldBounds.set(level.x, level.y - 100, level.width, level.height + 100);
+		
 		//jumpTween = new FlxTween();
-		saveGame();
+		//saveGame();
+		
+		FlxG.watch.add(water, "y");
+		FlxG.watch.add(player, "x");
+		FlxG.watch.add(player, "y");
 	}
 
 	/**
@@ -221,8 +258,6 @@ class PlayState extends FlxState
 	override public function destroy():Void
 	{
 		FlxDestroyUtil.destroy(soundItemtake);
-		FlxDestroyUtil.destroy(soundBossattack1);
-		FlxDestroyUtil.destroy(soundBossattack2);
 		FlxDestroyUtil.destroy(soundBossdeath);
 		FlxDestroyUtil.destroy(soundRevive);
 		
@@ -264,7 +299,15 @@ class PlayState extends FlxState
 	
 	function pickupItem(who: FlxObject, what: FlxObject): Bool
 	{
-		itemGroup.remove(what);
+		itemGroup.remove(what, true);
+		
+		// save the item pos as player pos to fix the revive animation position
+		var xBackup = player.x;
+		var yBackup = player.y;
+		
+		player.x = what.x;
+		player.y = what.y;
+		
 		what.destroy();
 		
 		soundItemtake.play();
@@ -273,6 +316,9 @@ class PlayState extends FlxState
 		water.y += levelGrowHeight;
 		saveGame();
 		water.y -= levelGrowHeight;
+		
+		player.x = xBackup;
+		player.y = yBackup;
 		
 		growLevel();
 		
@@ -288,28 +334,76 @@ class PlayState extends FlxState
 	{
 		trace("growing level");
 		
-		waterTween = FlxTween.tween(water, { y: water.y + levelGrowHeight }, levelGrowLength, { onComplete: growLevelEnded, onUpdate: growLevelEnded, type:FlxTween.ONESHOT } );
+		disableControls = true;
+		
+		waterTween = FlxTween.tween(water, { y: water.y + levelGrowHeight }, levelGrowLength, { onComplete: growLevelEnded, onUpdate: growLevelUpdate, type:FlxTween.ONESHOT } );
 		FlxG.camera.shake(0.01, levelGrowLength, null, true, X);
 		
 		updateCameraBounds();
 	}
 	
-	function growLevelEnded(tween: FlxTween):Void
+	function growLevelUpdate(tween: FlxTween):Void
 	{
 		updateCameraBounds();
 	}
 	
-	function inWater(who: FlxObject, what: FlxObject): Bool
+	function growLevelEnded(tween: FlxTween):Void
+	{
+		disableControls = false;
+		updateCameraBounds();
+	}
+	
+	function dieOnOverlap(who: FlxObject, what: FlxObject): Bool
 	{
 		restartLevel();
 		return true;
 	}
 	
+	function reviveAnimationEnded(animationName: String):Void
+	{
+		remove(revivor);
+		
+		disableControls = false;
+	}
+	
 	function restartLevel():Void
 	{
-		//FlxG.switchState(new PlayState());
-		soundRevive.play();
-		loadGame();
+		if (!weHaveSavegame)
+		{
+			FlxG.switchState(new MenuState());
+		}
+		else
+		{
+			disableControls = true;	
+			jumping = false;
+					
+			//soundBossattack1.stop();
+			//soundBossattack2.stop();
+			soundBossdeath.stop();
+			soundItemtake.stop();
+			
+			for (bullet in bulletGroup)
+			{
+				bullet.destroy();
+			}
+			bulletGroup.clear();
+
+			moveDelta = 0.0;
+			if (jumpTween != null) jumpTween.cancel();
+			if (waterTween != null) waterTween.cancel();
+			FlxG.camera.stopFX();
+			
+			soundRevive.play();
+
+			add(revivor);
+			
+			revivor.animation.play("revive");
+			
+			loadGame();
+			
+			revivor.x = player.x - revivor.frameWidth / 2 + 2;
+			revivor.y = player.y - revivor.frameHeight / 2 + 6;
+		}
 	}
 	
 	function endGame(timer: FlxTimer):Void
@@ -333,22 +427,24 @@ class PlayState extends FlxState
 		}
 		Reg.save.data.itemPosArray = itemPosArray;
 		
+		
+		var bossPosArray: Array<FlxPoint> = new Array<FlxPoint>();
+		for (boss in bossGroup)
+		{
+			var sprite: FlxSprite = cast(boss, FlxSprite);
+			bossPosArray.push(new FlxPoint(sprite.x, sprite.y));
+		}
+		Reg.save.data.bossPosArray = bossPosArray;
+		
+		
 		Reg.save.flush();
+		
+		weHaveSavegame = true;
 	}
 	
 	function loadGame():Void
 	{
 		trace("load game");
-		
-		soundBossattack1.stop();
-		soundBossattack2.stop();
-		soundBossdeath.stop();
-		soundItemtake.stop();
-		
-		moveDelta = 0.0;
-		if (jumpTween != null) jumpTween.cancel();
-		if (waterTween != null) waterTween.cancel();
-		FlxG.camera.stopFX();
 		
 		for (item in itemGroup)
 		{
@@ -361,6 +457,20 @@ class PlayState extends FlxState
 		{
 			itemGroup.add(new Item(itemPos.x, itemPos.y));
 		}
+		
+		
+		for (boss in bossGroup)
+		{
+			boss.destroy();
+		}
+		bossGroup.clear();
+		
+		var bossPosArray: Array<FlxPoint> = Reg.save.data.bossPosArray;
+		for (bossPos in bossPosArray)
+		{
+			bossGroup.add(new Boss(bossPos.x, bossPos.y, bulletGroup));
+		}
+		
 		
 		water.y = Reg.save.data.waterY;
 		updateCameraBounds();
@@ -377,83 +487,109 @@ class PlayState extends FlxState
 		
 		//var notGoingToJump: Bool = false;
 		
-		if (!jumping)
+		if (disableControls)
 		{
 			moveDelta = 0;
-			
-			if (FlxG.keys.anyPressed(["A", "LEFT"]))
-			{
-				if (FlxG.keys.anyJustPressed(["A", "LEFT"]))
-					timerJump.start(jumpThreshold);
-					
-				//notGoingToJump = ;
-				//timeLeftPressed = elapsed;
-				
-				moveDelta -= speed;
-			}
-			else
-			{
-				//if (elapsed - timeLeftPressed <= jumpThreshold)
-				if (FlxG.keys.anyJustReleased(["A", "LEFT"]))
-				{
-					if (timerJump.active && !timerJump.finished)
-					{
-						startJump();
-						moveDelta -= speed;
-						//timeLeftPressed = Math.NEGATIVE_INFINITY;
-						timerJump.active = false;
-					}
-				}
-			}
-
-			if (FlxG.keys.anyPressed(["D", "RIGHT"]))
-			{
-				if (FlxG.keys.anyJustPressed(["D", "RIGHT"]))
-					timerJump.start(jumpThreshold);
-					
-				//timeRightPressed = elapsed;
-				//timerJump.start(jumpThreshold);
-				moveDelta += speed;
-			}
-			else
-			{
-				if (FlxG.keys.anyJustReleased(["D", "RIGHT"]))
-				{
-					//if (elapsed - timeRightPressed <= jumpThreshold)
-					if (timerJump.active && !timerJump.finished)
-					{
-						startJump();
-						moveDelta += speed;
-						//timeRightPressed = Math.NEGATIVE_INFINITY;
-						timerJump.active = false;
-					}
-				}
-			}
-			
-			if (Math.abs(moveDelta) < 0.01)
-				player.animation.play("idle");
-			else
-				player.animation.play(if (moveDelta > 0) "right" else "left");
+			player.animation.play("idle");
 		}
 		else
 		{
-			player.animation.play(if (moveDelta > 0) "rightjump" else "leftjump");
-			
-			/*if (elapsed - timeJumpStarted >= jumpLength)
+			if (!jumping)
 			{
-				stopJump();
-			}*/
+				moveDelta = 0;
+				
+				if (FlxG.keys.anyPressed(["A", "LEFT"]))
+				{
+					if (FlxG.keys.anyJustPressed(["A", "LEFT"]))
+						timerJump.start(jumpThreshold);
+						
+					//notGoingToJump = ;
+					//timeLeftPressed = elapsed;
+					
+					moveDelta -= speed;
+				}
+				else
+				{
+					//if (elapsed - timeLeftPressed <= jumpThreshold)
+					if (FlxG.keys.anyJustReleased(["A", "LEFT"]))
+					{
+						if (timerJump.active && !timerJump.finished)
+						{
+							startJump();
+							moveDelta -= speed;
+							//timeLeftPressed = Math.NEGATIVE_INFINITY;
+							timerJump.active = false;
+						}
+					}
+				}
+
+				if (FlxG.keys.anyPressed(["D", "RIGHT"]))
+				{
+					if (FlxG.keys.anyJustPressed(["D", "RIGHT"]))
+						timerJump.start(jumpThreshold);
+						
+					//timeRightPressed = elapsed;
+					//timerJump.start(jumpThreshold);
+					moveDelta += speed;
+				}
+				else
+				{
+					if (FlxG.keys.anyJustReleased(["D", "RIGHT"]))
+					{
+						//if (elapsed - timeRightPressed <= jumpThreshold)
+						if (timerJump.active && !timerJump.finished)
+						{
+							startJump();
+							moveDelta += speed;
+							//timeRightPressed = Math.NEGATIVE_INFINITY;
+							timerJump.active = false;
+						}
+					}
+				}
+				
+				if (Math.abs(moveDelta) < 0.01)
+					player.animation.play("idle");
+				else
+					player.animation.play(if (moveDelta > 0) "right" else "left");
+			}
+			else
+			{
+				player.animation.play(if (moveDelta > 0) "rightjump" else "leftjump");
+				
+				/*if (elapsed - timeJumpStarted >= jumpLength)
+				{
+					stopJump();
+				}*/
+			}
 		}
 		
-		
-		/*if (FlxG.keys.anyPressed(["F5"]))
-			saveGame();
-		if (FlxG.keys.anyPressed(["F6"]))
-			loadGame();*/
+		for (bossBasic in bossGroup)
+		{
+			var boss = cast(bossBasic, Boss);
+			
+			boss.setFacingLeft(boss.x > player.x);
+			//boss.setFacingLeft(true);
+			
+			if (boss.y < water.y)
+			{
+				if (boss.y < water.y - boss.frameHeight)
+				{
+					bossGroup.remove(boss, true);
+					boss.destroy();
+					soundBossdeath.play();
+				}
+				else
+				{
+					boss.setAttackActive(true);
+				}
+			}
+			else
+			{
+				boss.setAttackActive(false);
+			}
+		}
 		
 		player.x += moveDelta;
-		
-		FlxG.overlap(player, itemGroup, null, pickupItem);
 
 		if (FlxG.collide(player, level))
 		{
@@ -461,7 +597,11 @@ class PlayState extends FlxState
 			//stopJump();
 		}
 		
-		FlxG.overlap(player, water, null, inWater);
+		FlxG.overlap(player, water, null, dieOnOverlap);
+		FlxG.overlap(player, bossGroup, null, dieOnOverlap);
+		FlxG.overlap(player, bulletGroup, null, dieOnOverlap);
+		
+		FlxG.overlap(player, itemGroup, null, pickupItem);
 		
 		/*if (jumping == false)
 		{
@@ -475,8 +615,39 @@ class PlayState extends FlxState
 		
 		//FlxG.collide(FlxG.camera, water);
 		
-		if (itemGroup.countLiving() == 0)
-			timerEndgame.start(4.0, endGame);
+		if ((itemGroup.length == 0) && !timerEndgame.active && !timerEndgame.finished)
+		//if ((itemGroup.length == 0) && waterTween.finished)
+		{
+			disableControls = true;
+			//FlxG.switchState(new EndState());
+			timerEndgame.start(2.0, endGame);
+		}		
+		
+		if (FlxG.keys.anyPressed(["F5"]))
+		{
+			water.y = 324;
+			updateCameraBounds();
+			movePlayer(32, 307);
+			saveGame();
+		}
+		if (FlxG.keys.anyPressed(["F6"]))
+		{
+			water.y = 444;
+			updateCameraBounds();
+			movePlayer(456, 410);
+			saveGame();
+		}
+		if (FlxG.keys.anyPressed(["F7"]))
+		{
+			water.y = 468;
+			updateCameraBounds();
+			movePlayer(264, 450);
+			saveGame();
+		}
+		/*if (FlxG.keys.anyPressed(["F8"]))
+		{
+			itemGroup.clear();
+		}*/
 		
 		super.update(elapsed);
 	}

@@ -1,3 +1,8 @@
+[unfixable] - scale 2x or more
+[semifix] - noticeable delay when taking item
+[semifix] - bug: if I take a new item when water flush not finished, the water level is broken
+[semifix] - pause player acceleration on revival
+
 + hero
 + level
 + collision
@@ -8,15 +13,23 @@
 + hero animation
 + bug: if I fall from high, and water is almost at ground level, I can collide with water on landing and die :/
 + bug: under item always the empty tile
-+ [test] end condition
-- scale 2x or more
-- !!! [fixes a bug] item take animation (rays or something) & make player wait until water, animation and camera finish
-- revive animation
-- boss in water at level center, then at level end. to overcome, flush the water =) sounds of boss
++ make player wait until water, animation and camera finish
++ sounds
++ bosses, to overcome, flush the water =)
++ add tiles inside ground
++ store bosses in savegames
++ destroy bullets after revive 
+
+[no need to fix?] - boss attack distance
+
 - music (separate one for boss)
-- noticeable delay when taking item
-- add tiles inside ground
-- bug: if I take a new item when water flush not finished, the water level is broken
+- boss attack animation, bullet destroy animation, boss death tween?
+- bug: end condition works unstable (only after death?)
+- bug: when I take third (fifth) item and drown, I revive and retake the same item
 - bug: jump and move while falling
+- bug: sound of boss' death on revive
+- remove bullets from bullets group on destroy
 - birds
-- moving clouds
+- improve clouds patterns, improve water
+- item take animation (rays or something)
+- improve revive animation
