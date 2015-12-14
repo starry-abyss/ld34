@@ -10,6 +10,7 @@ class MenuState extends PlayState
 	override public function create():Void
 	{
 		setLevelName("assets/data/info.png");
+		setBirdOffset(200);
 		
 		super.create();
 		

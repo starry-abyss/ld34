@@ -38,6 +38,13 @@ class PlayState extends FlxState
 		this.levelName = levelName;
 	}
 	
+	function setBirdOffset(birdOffset: Float):Void
+	{
+		this.birdOffset = birdOffset;
+	}
+	
+	var birdOffset: Float = 0;
+	
 	function flushWater():Void
 	{
 		water.y = tileSize * 58;
@@ -241,7 +248,7 @@ class PlayState extends FlxState
 		birdGroup = new FlxGroup();
 		for (i in 0...15)
 		{
-			birdGroup.add(new Bird(birdRandomizer.float(0, 400), birdRandomizer.float(-100, -70)));
+			birdGroup.add(new Bird(birdRandomizer.float(0, 400), birdOffset + birdRandomizer.float(-100, -70)));
 		}
 		
 		
@@ -621,6 +628,10 @@ class PlayState extends FlxState
 			//jumping = false;
 			//stopJump();
 		}
+		else
+		{
+			//jumping = true;
+		}
 		
 		FlxG.overlap(player, water, null, dieOnOverlap);
 		FlxG.overlap(player, bossGroup, null, dieOnOverlap);
@@ -640,15 +651,15 @@ class PlayState extends FlxState
 		
 		//FlxG.collide(FlxG.camera, water);
 		
-		if ((itemGroup.length == 0) && !timerEndgame.active && !timerEndgame.finished)
+		if ((itemGroup.countLiving() <= 0) && !timerEndgame.active && !timerEndgame.finished)
 		//if ((itemGroup.length == 0) && waterTween.finished)
 		{
 			disableControls = true;
 			//FlxG.switchState(new EndState());
-			timerEndgame.start(2.0, endGame);
+			timerEndgame.start(3.0, endGame);
 		}		
 		
-		if (FlxG.keys.anyPressed(["F5"]))
+		/*if (FlxG.keys.anyPressed(["F5"]))
 		{
 			water.y = 324;
 			updateCameraBounds();
@@ -668,7 +679,7 @@ class PlayState extends FlxState
 			updateCameraBounds();
 			movePlayer(264, 450);
 			saveGame();
-		}
+		}*/
 		/*if (FlxG.keys.anyPressed(["F8"]))
 		{
 			itemGroup.clear();

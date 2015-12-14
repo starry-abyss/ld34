@@ -10,6 +10,7 @@ class EndState extends PlayState
 	override public function create():Void
 	{
 		setLevelName("assets/data/end.png");
+		setBirdOffset(200);
 		
 		super.create();
 		
