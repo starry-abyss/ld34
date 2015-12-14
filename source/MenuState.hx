@@ -15,6 +15,10 @@ class MenuState extends PlayState
 		
 		flushWater();
 	}
+	
+	override function startMusic():Void
+	{
+	}
 
 	override public function destroy():Void
 	{

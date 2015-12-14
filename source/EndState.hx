@@ -16,6 +16,10 @@ class EndState extends PlayState
 		flushWater();
 		movePlayer(195, 340);
 	}
+	
+	override function startMusic():Void
+	{
+	}
 
 	override public function destroy():Void
 	{

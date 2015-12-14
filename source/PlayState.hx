@@ -9,6 +9,7 @@ import flixel.FlxState;
 import flixel.FlxObject;
 import flixel.group.FlxGroup;
 import flixel.math.FlxPoint;
+import flixel.math.FlxRandom;
 import flixel.math.FlxRect;
 import flixel.system.FlxSound;
 import flixel.system.scaleModes.PixelPerfectScaleMode;
@@ -48,6 +49,16 @@ class PlayState extends FlxState
 		player.x = x;
 		player.y = y;
 	}
+	
+	function startMusic():Void
+	{
+		music = FlxG.sound.load("assets/music/track1.mp3");
+		//FlxG.sound.playMusic(music, 1, true);
+		music.looped = true;
+		music.play();
+	}
+	
+	var music: FlxSound;
 
 	var player: FlxSprite;
 	var revivor: FlxSprite;
@@ -89,10 +100,14 @@ class PlayState extends FlxState
 	var soundRevive: FlxSound;
 	
 	var weHaveSavegame: Bool = false;
+	var birdGroup: FlxGroup;
+	var birdRandomizer: FlxRandom;
 	 
 	override public function create():Void
 	{
 		super.create();
+		
+		startMusic();
 		
 		Reg.save.bind("save1");
 		
@@ -221,7 +236,17 @@ class PlayState extends FlxState
 			trace("boss: " + bossPos.x + " " + bossPos.y);
 		}
 		
+		
+		birdRandomizer = new FlxRandom();
+		birdGroup = new FlxGroup();
+		for (i in 0...15)
+		{
+			birdGroup.add(new Bird(birdRandomizer.float(0, 400), birdRandomizer.float(-100, -70)));
+		}
+		
+		
 		add(background);
+		add(birdGroup);
 		add(level);
 		add(player);
 		add(itemGroup);
@@ -241,7 +266,7 @@ class PlayState extends FlxState
 		timerJump = new FlxTimer();
 		timerEndgame = new FlxTimer();
 		
-		FlxG.worldBounds.set(level.x, level.y - 100, level.width, level.height + 100);
+		FlxG.worldBounds.set(water.x, level.y - 100, water.width, level.height + 100);
 		
 		//jumpTween = new FlxTween();
 		//saveGame();

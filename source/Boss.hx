@@ -33,7 +33,9 @@ class Boss extends FlxSprite
 		
 		attackTimer = new FlxTimer();
 		this.bullets = bullets;
-		loadGraphic("assets/images/boss.png", false, 24, 32);
+		loadGraphic("assets/images/boss.png", true, 24, 32);
+		animation.add("idle", [0, 1, 0, 1, 0, 0, 1, 1], 3, true);
+		animation.play("idle");
 	}
 	
 	function attack(): Void

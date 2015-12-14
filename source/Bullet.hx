@@ -22,7 +22,9 @@ class Bullet extends FlxSprite
 		lifeTimer.start(5.0, onTimer);
 		
 		this.direction = direction.normalize();
-		loadGraphic("assets/images/bullet.png", false, 32, 32);
+		loadGraphic("assets/images/bullet.png", true, 8, 8);
+		animation.add("fly", [0, 1], 2, true, direction.x > 0);
+		animation.play("fly");
 	}
 	
 	function onTimer(timer: FlxTimer): Void

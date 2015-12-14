@@ -20,15 +20,16 @@
 + store bosses in savegames
 + destroy bullets after revive 
 
-[no need to fix?] - boss attack distance
-
 - music (separate one for boss)
-- boss attack animation, bullet destroy animation, boss death tween?
-- bug: end condition works unstable (only after death?)
+[no need to fix?] - boss attack distance
++ boss attack animation, bullet destroy animation
 - bug: when I take third (fifth) item and drown, I revive and retake the same item
+
+- bug: end condition works unstable (only after death?)
 - bug: jump and move while falling
 - bug: sound of boss' death on revive
 - remove bullets from bullets group on destroy
+- !!! remove debug keys
 - birds
 - improve clouds patterns, improve water
 - item take animation (rays or something)
