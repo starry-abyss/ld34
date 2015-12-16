@@ -281,6 +281,7 @@ class PlayState extends FlxState
 		FlxG.watch.add(water, "y");
 		FlxG.watch.add(player, "x");
 		FlxG.watch.add(player, "y");
+		FlxG.debugger.drawDebug = true;
 	}
 
 	/**
@@ -491,22 +492,29 @@ class PlayState extends FlxState
 		}
 		
 		
+		water.y = Reg.save.data.waterY;
+		updateCameraBounds();
+		
+		
 		for (boss in bossGroup)
 		{
 			boss.destroy();
 		}
 		bossGroup.clear();
-		
+
 		var bossPosArray: Array<FlxPoint> = Reg.save.data.bossPosArray;
 		for (bossPos in bossPosArray)
 		{
-			bossGroup.add(new Boss(bossPos.x, bossPos.y, bulletGroup));
+			if (!bossGoingToDie(bossPos.y, water.y))
+				bossGroup.add(new Boss(bossPos.x, bossPos.y, bulletGroup));
 		}
 		
-		
-		water.y = Reg.save.data.waterY;
-		updateCameraBounds();
 		movePlayer(Reg.save.data.playerX, Reg.save.data.playerY);
+	}
+	
+	public function bossGoingToDie(bossY: Float, waterY: Float): Bool
+	{
+		return bossY < waterY - Boss.bossHeight;
 	}
 
 	/**
@@ -604,7 +612,8 @@ class PlayState extends FlxState
 			
 			if (boss.y < water.y)
 			{
-				if (boss.y < water.y - boss.frameHeight)
+				//if (boss.y < water.y - boss.frameHeight)
+				if (bossGoingToDie(boss.y, water.y))
 				{
 					bossGroup.remove(boss, true);
 					boss.destroy();

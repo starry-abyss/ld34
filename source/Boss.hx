@@ -21,6 +21,7 @@ class Boss extends FlxSprite
 	var soundBossattack2: FlxSound;
 	
 	var soundRandomizer: FlxRandom;
+	public static var bossHeight(default, null): Int = 32;
 	
 	public function new(x: Float, y: Float, bullets: FlxGroup) 
 	{
@@ -33,7 +34,7 @@ class Boss extends FlxSprite
 		
 		attackTimer = new FlxTimer();
 		this.bullets = bullets;
-		loadGraphic("assets/images/boss.png", true, 24, 32);
+		loadGraphic("assets/images/boss.png", true, 24, bossHeight);
 		animation.add("idle", [0, 1, 0, 1, 0, 0, 1, 1], 3, true);
 		animation.play("idle");
 	}
