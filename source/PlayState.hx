@@ -12,7 +12,7 @@ import flixel.math.FlxPoint;
 import flixel.math.FlxRandom;
 import flixel.math.FlxRect;
 import flixel.system.FlxSound;
-import flixel.system.scaleModes.PixelPerfectScaleMode;
+import flixel.system.scaleModes.RatioScaleMode;
 import flixel.tile.FlxTilemap;
 import flixel.tweens.FlxTween;
 import flixel.tweens.FlxEase;
@@ -264,7 +264,7 @@ class PlayState extends FlxState
 		//FlxG.camera.zoom = 2;
 		
 		//FlxG.camera.bgColor = 0x7dc1ff;
-		FlxG.scaleMode = new PixelPerfectScaleMode();
+		FlxG.scaleMode = new RatioScaleMode();
 		FlxG.camera.follow(player, PLATFORMER, null, 4);
 		updateCameraBounds();
 		
