@@ -43,7 +43,7 @@ class PlayState extends FlxState
 		this.birdOffset = birdOffset;
 	}
 	
-	var birdOffset: Float = 0;
+	var birdOffset: Float = 200;
 	
 	function flushWater():Void
 	{
@@ -71,7 +71,7 @@ class PlayState extends FlxState
 	var revivor: FlxSprite;
 	var level: FlxTilemap;
 	var water: FlxTilemap;
-	var background: FlxBackdrop;
+	var background: FlxSprite;
 	var itemGroup: FlxGroup;
 	var bossGroup: FlxGroup;
 	var bulletGroup: FlxGroup;
@@ -139,7 +139,12 @@ class PlayState extends FlxState
 		
 		//var backgroundImage: FlxSprite = new FlxSprite();
 		//backgroundImage.makeGraphic(10, 10, 0x7dc1ff);
-		background = new FlxBackdrop("assets/images/background.png");
+		//background = new FlxBackdrop("assets/images/background.png");
+		background = new FlxSprite();
+		background.loadGraphic("assets/images/background.png", false, 1024, 256);
+		//background.centerOrigin();
+		background.x = -300;
+		background.y = 0;
 		//background.makeGraphic(10, 10, 0x7dc1ff);
 		background.scrollFactor.x = 0.5;
 		background.scrollFactor.y = 0.5;
@@ -248,7 +253,9 @@ class PlayState extends FlxState
 		birdGroup = new FlxGroup();
 		for (i in 0...15)
 		{
-			birdGroup.add(new Bird(birdRandomizer.float(0, 400), birdOffset + birdRandomizer.float(-100, -70)));
+			var bird: Bird = new Bird(birdRandomizer.float(0, 400), birdOffset + birdRandomizer.float(-100, -70));
+			bird.scrollFactor.y = 0.5;
+			birdGroup.add(bird);
 		}
 		
 		
@@ -263,7 +270,7 @@ class PlayState extends FlxState
 		
 		//FlxG.camera.zoom = 2;
 		
-		//FlxG.camera.bgColor = 0x7dc1ff;
+		FlxG.camera.bgColor = 0xff7dc1ff;
 		FlxG.scaleMode = new RatioScaleMode();
 		FlxG.camera.follow(player, PLATFORMER, null, 4);
 		updateCameraBounds();
