@@ -8,6 +8,7 @@ import flixel.FlxSprite;
 import flixel.FlxState;
 import flixel.FlxObject;
 import flixel.group.FlxGroup;
+import flixel.input.keyboard.FlxKey;
 import flixel.math.FlxPoint;
 import flixel.math.FlxRandom;
 import flixel.math.FlxRect;
@@ -109,6 +110,9 @@ class PlayState extends FlxState
 	var weHaveSavegame: Bool = false;
 	var birdGroup: FlxGroup;
 	var birdRandomizer: FlxRandom;
+	
+	var keysLeft: Array<FlxKey> = ["A", "LEFT"];
+	var keysRight: Array<FlxKey> = ["D", "RIGHT"];
 	 
 	override public function create():Void
 	{
@@ -545,9 +549,9 @@ class PlayState extends FlxState
 			{
 				moveDelta = 0;
 				
-				if (FlxG.keys.anyPressed(["A", "LEFT"]))
+				if (FlxG.keys.anyPressed(keysLeft))
 				{
-					if (FlxG.keys.anyJustPressed(["A", "LEFT"]))
+					if (FlxG.keys.anyJustPressed(keysLeft))
 						timerJump.start(jumpThreshold);
 						
 					//notGoingToJump = ;
@@ -558,7 +562,7 @@ class PlayState extends FlxState
 				else
 				{
 					//if (elapsed - timeLeftPressed <= jumpThreshold)
-					if (FlxG.keys.anyJustReleased(["A", "LEFT"]))
+					if (FlxG.keys.anyJustReleased(keysLeft))
 					{
 						if (timerJump.active && !timerJump.finished)
 						{
@@ -570,9 +574,9 @@ class PlayState extends FlxState
 					}
 				}
 
-				if (FlxG.keys.anyPressed(["D", "RIGHT"]))
+				if (FlxG.keys.anyPressed(keysRight))
 				{
-					if (FlxG.keys.anyJustPressed(["D", "RIGHT"]))
+					if (FlxG.keys.anyJustPressed(keysRight))
 						timerJump.start(jumpThreshold);
 						
 					//timeRightPressed = elapsed;
@@ -581,7 +585,7 @@ class PlayState extends FlxState
 				}
 				else
 				{
-					if (FlxG.keys.anyJustReleased(["D", "RIGHT"]))
+					if (FlxG.keys.anyJustReleased(keysRight))
 					{
 						//if (elapsed - timeRightPressed <= jumpThreshold)
 						if (timerJump.active && !timerJump.finished)
