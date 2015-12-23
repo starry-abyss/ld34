@@ -24,12 +24,12 @@
 - music (separate one for boss)
 [no need to fix?] - boss attack distance
 - boss attack animation, bullet destroy animation
-- bug: when I take third (fifth) item and drown, I revive and retake the same item
+[seems autofixed] - bug: when I take third (fifth) item and drown, I revive and retake the same item
 
 
 + bug: end condition works unstable (only after death?)
-- bug: jump and move while falling
-- bug: sound of boss' death on revive
++ bug: jump and move while falling
++ bug: sound of boss' death on revive
 - remove bullets from bullets group on destroy
 - !!! remove debug keys
 

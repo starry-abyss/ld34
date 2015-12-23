@@ -536,7 +536,8 @@ class PlayState extends FlxState
 		var speed: Float = 1.0;
 		var jumpThreshold: Float = 0.2;
 		
-		//var notGoingToJump: Bool = false;
+		// colliding on Y axis by acceleration, setting flags for jumping
+		FlxG.collide(player, level);
 		
 		if (disableControls)
 		{
@@ -562,7 +563,7 @@ class PlayState extends FlxState
 				else
 				{
 					//if (elapsed - timeLeftPressed <= jumpThreshold)
-					if (FlxG.keys.anyJustReleased(keysLeft))
+					if (FlxG.keys.anyJustReleased(keysLeft) && player.isTouching(FlxObject.DOWN))
 					{
 						if (timerJump.active && !timerJump.finished)
 						{
@@ -585,7 +586,7 @@ class PlayState extends FlxState
 				}
 				else
 				{
-					if (FlxG.keys.anyJustReleased(keysRight))
+					if (FlxG.keys.anyJustReleased(keysRight) && player.isTouching(FlxObject.DOWN))
 					{
 						//if (elapsed - timeRightPressed <= jumpThreshold)
 						if (timerJump.active && !timerJump.finished)
@@ -643,15 +644,8 @@ class PlayState extends FlxState
 		
 		player.x += moveDelta;
 
-		if (FlxG.collide(player, level))
-		{
-			//jumping = false;
-			//stopJump();
-		}
-		else
-		{
-			//jumping = true;
-		}
+		// colliding on X axis by movement
+		FlxG.collide(player, level);
 		
 		FlxG.overlap(player, water, null, dieOnOverlap);
 		FlxG.overlap(player, bossGroup, null, dieOnOverlap);
