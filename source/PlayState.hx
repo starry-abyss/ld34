@@ -19,6 +19,7 @@ import flixel.tweens.FlxTween;
 import flixel.tweens.FlxEase;
 import flixel.util.FlxDestroyUtil;
 import flixel.util.FlxStringUtil;
+import haxe.Timer;
 import openfl.Assets;
 import flixel.util.FlxTimer;
 //import flixel.util.FlxMath;
@@ -91,8 +92,14 @@ class PlayState extends FlxState
 	
 	var jumpTween: FlxTween = null;
 	var waterTween: FlxTween = null;
-	static inline var jumpLength: Float = 0.1;
+	static inline var jumpLength: Float = 0.10;
 	static inline var jumpHeight: Float = 10.0;
+	
+	static inline var speed: Float = 1.0;
+	static inline var jumpThreshold: Float = 0.25;
+	
+	var timerFromGround: FlxTimer;
+	static inline var jumpTimeChance: Float = 0.10;
 	
 	var moveDelta: Float = 0;
 	
@@ -113,6 +120,11 @@ class PlayState extends FlxState
 	
 	var keysLeft: Array<FlxKey> = ["A", "LEFT"];
 	var keysRight: Array<FlxKey> = ["D", "RIGHT"];
+	var keysJumpClassic: Array<FlxKey> = ["W", "UP"];
+	var classicControls = false;
+	
+	var lastJumpStartTime = 0.0;
+	var lastJumpDelay = 0.0;
 	 
 	override public function create():Void
 	{
@@ -283,6 +295,7 @@ class PlayState extends FlxState
 		//timerRightPressed = new FlxTimer();
 		timerJump = new FlxTimer();
 		timerEndgame = new FlxTimer();
+		timerFromGround = new FlxTimer();
 		
 		FlxG.worldBounds.set(water.x, level.y - 100, water.width, level.height + 100);
 		
@@ -292,7 +305,8 @@ class PlayState extends FlxState
 		FlxG.watch.add(water, "y");
 		FlxG.watch.add(player, "x");
 		FlxG.watch.add(player, "y");
-		FlxG.debugger.drawDebug = true;
+		FlxG.watch.add(this, "lastJumpDelay");
+		//FlxG.debugger.drawDebug = true;
 	}
 
 	/**
@@ -321,7 +335,7 @@ class PlayState extends FlxState
 		if (!jumping)
 		{
 			jumping = true;
-			jumpTween = FlxTween.tween(player, { y: player.y - jumpHeight }, jumpLength, { onComplete: jumpTweenEnded, type:FlxTween.PINGPONG, ease:FlxEase.quadInOut } );
+			jumpTween = FlxTween.tween(player, { y: player.y - jumpHeight }, jumpLength, { onComplete: jumpTweenEnded, type:FlxTween.PINGPONG, ease:FlxEase.circInOut } );
 			//timeJumpStarted = FlxGame.;
 			/*timerJump.active = true;
 			timerJump.start();*/
@@ -344,6 +358,8 @@ class PlayState extends FlxState
 	function pickupItem(who: FlxObject, what: FlxObject): Bool
 	{
 		itemGroup.remove(what, true);
+		
+		stopJump();
 		
 		// save the item pos as player pos to fix the revive animation position
 		var xBackup = player.x;
@@ -533,9 +549,6 @@ class PlayState extends FlxState
 	 */
 	override public function update(elapsed: Float):Void
 	{
-		var speed: Float = 1.0;
-		var jumpThreshold: Float = 0.2;
-		
 		// colliding on Y axis by acceleration, setting flags for jumping
 		FlxG.collide(player, level);
 		
@@ -546,55 +559,104 @@ class PlayState extends FlxState
 		}
 		else
 		{
-			if (!jumping)
+			if ((player.isTouching(FlxObject.DOWN) && (!jumping || (jumping && jumpTween.backward))))
+				//|| (player.isTouching(FlxObject.UP) && (!player.isTouching(FlxObject.LEFT)) && (!player.isTouching(FlxObject.RIGHT))))
 			{
+				stopJump();
 				moveDelta = 0;
 				
-				if (FlxG.keys.anyPressed(keysLeft))
-				{
-					if (FlxG.keys.anyJustPressed(keysLeft))
-						timerJump.start(jumpThreshold);
-						
-					//notGoingToJump = ;
-					//timeLeftPressed = elapsed;
+				timerFromGround.start(jumpTimeChance);
+			}
 					
-					moveDelta -= speed;
-				}
-				else
+			//if (!jumping)
+			//if (player.isTouching(FlxObject.DOWN))
+			{
+				
+				var canJump: Bool = timerFromGround.active && !timerFromGround.finished && !jumping;
+				if (canJump)
 				{
-					//if (elapsed - timeLeftPressed <= jumpThreshold)
-					if (FlxG.keys.anyJustReleased(keysLeft) && player.isTouching(FlxObject.DOWN))
+					moveDelta = 0;
+				}
+				// = player.isTouching(FlxObject.DOWN)
+				
+				if (classicControls)
+				{
+					moveDelta = 0;
+					if (FlxG.keys.anyPressed(keysLeft))
 					{
-						if (timerJump.active && !timerJump.finished)
-						{
-							startJump();
-							moveDelta -= speed;
-							//timeLeftPressed = Math.NEGATIVE_INFINITY;
-							timerJump.active = false;
-						}
+						moveDelta -= speed;
+					}
+					
+					if (FlxG.keys.anyPressed(keysRight))
+					{
+						moveDelta += speed;
+					}
+					
+					if (FlxG.keys.anyJustPressed(keysJumpClassic) && canJump)
+					{
+						startJump();
 					}
 				}
-
-				if (FlxG.keys.anyPressed(keysRight))
-				{
-					if (FlxG.keys.anyJustPressed(keysRight))
-						timerJump.start(jumpThreshold);
-						
-					//timeRightPressed = elapsed;
-					//timerJump.start(jumpThreshold);
-					moveDelta += speed;
-				}
 				else
 				{
-					if (FlxG.keys.anyJustReleased(keysRight) && player.isTouching(FlxObject.DOWN))
+					if (FlxG.keys.anyPressed(keysLeft))
 					{
-						//if (elapsed - timeRightPressed <= jumpThreshold)
-						if (timerJump.active && !timerJump.finished)
+						if (FlxG.keys.anyJustPressed(keysLeft))
 						{
-							startJump();
+							lastJumpStartTime = Timer.stamp();
+							timerJump.start(jumpThreshold);
+						}
+							
+						//notGoingToJump = ;
+						//timeLeftPressed = elapsed;
+						
+						if (player.isTouching(FlxObject.DOWN))
+							moveDelta -= speed;
+					}
+					else
+					{
+						//if (elapsed - timeLeftPressed <= jumpThreshold)
+						//if (FlxG.keys.anyJustReleased(keysLeft) && ((player.wasTouching & FlxObject.DOWN) != 0))
+						if (FlxG.keys.anyJustReleased(keysLeft) && canJump)
+						{
+							lastJumpDelay = Timer.stamp() - lastJumpStartTime;
+							if (timerJump.active && !timerJump.finished)
+							{
+								startJump();
+								moveDelta -= speed;
+								//timeLeftPressed = Math.NEGATIVE_INFINITY;
+								timerJump.active = false;
+							}
+						}
+					}
+
+					if (FlxG.keys.anyPressed(keysRight))
+					{
+						if (FlxG.keys.anyJustPressed(keysRight))
+						{
+							lastJumpStartTime = Timer.stamp();
+							timerJump.start(jumpThreshold);
+						}
+							
+						//timeRightPressed = elapsed;
+						//timerJump.start(jumpThreshold);
+						if (player.isTouching(FlxObject.DOWN))
 							moveDelta += speed;
-							//timeRightPressed = Math.NEGATIVE_INFINITY;
-							timerJump.active = false;
+					}
+					else
+					{
+						//if (FlxG.keys.anyJustReleased(keysRight) && ((player.wasTouching & FlxObject.DOWN) != 0))
+						if (FlxG.keys.anyJustReleased(keysRight) && canJump)
+						{
+							lastJumpDelay = Timer.stamp() - lastJumpStartTime;
+							//if (elapsed - timeRightPressed <= jumpThreshold)
+							if (timerJump.active && !timerJump.finished)
+							{
+								startJump();
+								moveDelta += speed;
+								//timeRightPressed = Math.NEGATIVE_INFINITY;
+								timerJump.active = false;
+							}
 						}
 					}
 				}
@@ -604,7 +666,8 @@ class PlayState extends FlxState
 				else
 					player.animation.play(if (moveDelta > 0) "right" else "left");
 			}
-			else
+			//else
+			if (jumping)
 			{
 				player.animation.play(if (moveDelta > 0) "rightjump" else "leftjump");
 				
@@ -670,7 +733,7 @@ class PlayState extends FlxState
 		{
 			disableControls = true;
 			//FlxG.switchState(new EndState());
-			timerEndgame.start(3.0, endGame);
+			timerEndgame.start(5.0, endGame);
 		}		
 		
 		/*if (FlxG.keys.anyPressed(["F5"]))

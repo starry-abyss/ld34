@@ -16,8 +16,8 @@ class Bird extends FlxSprite
 	{
 		super(x, y);
 		
-		loadGraphic("assets/images/bird.png", true, 10, 10);
-		animation.add("fly", [0, 1, 0, 1, 0, 0, 1, 1], 1, true);
+		loadGraphic("assets/images/bird.png", true, 10, 15);
+		animation.add("fly", [1, 0, 3, 2, 3, 0, 1, 0, 3, 2, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 7, true);
 		animation.play("fly");
 	}
 	
