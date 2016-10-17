@@ -288,7 +288,7 @@ class PlayState extends FlxState
 		
 		FlxG.camera.bgColor = 0xff7dc1ff;
 		FlxG.scaleMode = new RatioScaleMode();
-		FlxG.camera.follow(player, PLATFORMER, null, 4);
+		FlxG.camera.follow(player, PLATFORMER, null);
 		updateCameraBounds();
 		
 		//timerLeftPressed = new FlxTimer();
