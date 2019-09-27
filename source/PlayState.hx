@@ -309,6 +309,10 @@ class PlayState extends FlxState
 		FlxG.watch.add(player, "y");
 		FlxG.watch.add(this, "lastJumpDelay");
 		//FlxG.debugger.drawDebug = true;
+		
+#if !flash
+		FlxG.stage.opaqueBackground = FlxG.camera.bgColor;
+#end
 	}
 
 	/**
