@@ -271,7 +271,7 @@ class PlayState extends FlxState
 		birdGroup = new FlxGroup();
 		for (i in 0...15)
 		{
-			var bird: Bird = new Bird(birdRandomizer.float(0, 400), birdOffset + birdRandomizer.float(-100, -70));
+			var bird: Bird = new Bird(birdRandomizer.float(0, 400), birdOffset + birdRandomizer.float( -100, -70), birdRandomizer.int(0, 2));
 			bird.scrollFactor.y = 0.5;
 			birdGroup.add(bird);
 		}
