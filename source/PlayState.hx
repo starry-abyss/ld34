@@ -123,7 +123,7 @@ class PlayState extends FlxState
 	var keysLeft: Array<FlxKey> = ["A", "LEFT"];
 	var keysRight: Array<FlxKey> = ["D", "RIGHT"];
 	var keysJumpClassic: Array<FlxKey> = ["W", "UP"];
-	var classicControls = true;
+	var classicControls = false;
 	
 	var lastJumpStartTime = 0.0;
 	var lastJumpDelay = 0.0;
@@ -557,6 +557,9 @@ class PlayState extends FlxState
 	{
 		// colliding on Y axis by acceleration, setting flags for jumping
 		FlxG.collide(player, level);
+		
+		if (FlxG.keys.justPressed.TAB)
+			classicControls = !classicControls;
 		
 		if (disableControls)
 		{
