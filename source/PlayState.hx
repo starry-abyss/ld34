@@ -124,7 +124,7 @@ class PlayState extends FlxState
 	var keysLeft: Array<FlxKey> = ["LEFT", "A", "C", "Q"];
 	var keysRight: Array<FlxKey> = ["RIGHT", "D", "V", "E"];
 	var keysJumpClassic: Array<FlxKey> = ["SPACE", "UP", "W", "Z", "COMMA"];
-	var classicControls = false;
+	static var classicControls = false;
 	
 	var lastJumpStartTime = 0.0;
 	var lastJumpDelay = 0.0;
