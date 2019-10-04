@@ -28,7 +28,7 @@ class MenuState extends PlayState
 
 	override public function update(elapsed: Float):Void
 	{	
-		if (FlxG.keys.anyPressed(["A", "LEFT", "D", "RIGHT"]))
+		if (FlxG.keys.anyPressed(["LEFT", "A", "C", "Q", "RIGHT", "D", "V", "E"]))
 			FlxG.switchState(new PlayState());
 			
 		super.update(elapsed);

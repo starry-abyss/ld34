@@ -120,9 +120,10 @@ class PlayState extends FlxState
 	var birdGroup: FlxGroup;
 	var birdRandomizer: FlxRandom;
 	
-	var keysLeft: Array<FlxKey> = ["A", "LEFT"];
-	var keysRight: Array<FlxKey> = ["D", "RIGHT"];
-	var keysJumpClassic: Array<FlxKey> = ["W", "UP"];
+	// also support dvorak and azerty
+	var keysLeft: Array<FlxKey> = ["LEFT", "A", "C", "Q"];
+	var keysRight: Array<FlxKey> = ["RIGHT", "D", "V", "E"];
+	var keysJumpClassic: Array<FlxKey> = ["SPACE", "UP", "W", "Z", "COMMA"];
 	var classicControls = false;
 	
 	var lastJumpStartTime = 0.0;
@@ -313,6 +314,8 @@ class PlayState extends FlxState
 #if !flash
 		FlxG.stage.opaqueBackground = FlxG.camera.bgColor;
 #end
+		
+		FlxG.sound.muteKeys.push(FlxKey.M);
 	}
 
 	/**
