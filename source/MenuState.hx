@@ -15,6 +15,8 @@ class MenuState extends PlayState
 		super.create();
 		
 		flushWater();
+		
+		FlxG.camera.pixelPerfectRender = true;
 	}
 	
 	override function startMusic():Void

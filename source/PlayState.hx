@@ -733,7 +733,6 @@ class PlayState extends FlxState
 			timeJumpStarted = Math.NEGATIVE_INFINITY;
 			jumpTween.;
 		}*/
-		//FlxG.pixelPerfect
 		
 		/*FlxG.camera.x = player.x;
 		FlxG.camera.y = water.y;*/
