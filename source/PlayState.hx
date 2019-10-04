@@ -324,9 +324,9 @@ class PlayState extends FlxState
 	 */
 	override public function destroy():Void
 	{
-		FlxDestroyUtil.destroy(soundItemtake);
-		FlxDestroyUtil.destroy(soundBossdeath);
-		FlxDestroyUtil.destroy(soundRevive);
+		//FlxDestroyUtil.destroy(soundItemtake);
+		//FlxDestroyUtil.destroy(soundBossdeath);
+		//FlxDestroyUtil.destroy(soundRevive);
 		
 		super.destroy();
 	}
