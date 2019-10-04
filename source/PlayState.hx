@@ -505,8 +505,8 @@ class PlayState extends FlxState
 		}
 		Reg.save.data.bossPosArray = bossPosArray;
 		
-		
-		Reg.save.flush();
+		// TODO: don't need to flush, as inter-session loading is not supported anyway
+		//Reg.save.flush();
 		
 		weHaveSavegame = true;
 	}
