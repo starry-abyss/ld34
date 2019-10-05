@@ -17,11 +17,14 @@ import flixel.system.scaleModes.RatioScaleMode;
 import flixel.tile.FlxTilemap;
 import flixel.tweens.FlxTween;
 import flixel.tweens.FlxEase;
+import flixel.util.FlxColor;
 import flixel.util.FlxDestroyUtil;
 import flixel.util.FlxStringUtil;
 import haxe.Timer;
 import openfl.Assets;
 import flixel.util.FlxTimer;
+import openfl.geom.Point;
+import openfl.geom.Rectangle;
 //import flixel.util.FlxMath;
 
 /**
@@ -74,7 +77,9 @@ class PlayState extends FlxState
 	var player: FlxSprite;
 	var revivor: FlxSprite;
 	var level: FlxTilemap;
+	var levelSprite: FlxSprite;
 	var water: FlxTilemap;
+	var waterSprite: FlxSprite;
 	var background: FlxSprite;
 	var itemGroup: FlxGroup;
 	var bossGroup: FlxGroup;
@@ -278,14 +283,23 @@ class PlayState extends FlxState
 		}
 		
 		
+		// workaround for ugly tilemap seams
+		levelSprite = tilemapToSprite(level);
+		waterSprite = tilemapToSprite(water);
+		
+		
 		add(background);
 		add(birdGroup);
 		add(level);
+		level.visible = false;
+		add(levelSprite);
 		add(player);
 		add(itemGroup);
 		add(bossGroup);
 		add(bulletGroup);
 		add(water);
+		water.visible = false;
+		add(waterSprite);
 		
 		//FlxG.camera.zoom = 2;
 		
@@ -316,6 +330,32 @@ class PlayState extends FlxState
 #end
 		
 		FlxG.sound.muteKeys.push(FlxKey.M);
+	}
+	
+	function tilemapToSprite(tilemap:FlxTilemap):FlxSprite
+	{
+		var sprite:FlxSprite = new FlxSprite(tilemap.x, tilemap.y);
+		sprite.makeGraphic(Math.floor(tilemap.width), Math.floor(tilemap.height), FlxColor.TRANSPARENT, true);
+		
+		var sourceRect = new Rectangle();
+		var destPoint = new Point();
+		
+		for (y in 0...tilemap.heightInTiles)
+		{
+			for (x in 0...tilemap.widthInTiles)
+			{
+				var tile = tilemap.getTile(x, y);
+				var tilesetX = Math.floor(tile % 8) * tileSize;
+				var tilesetY = Math.floor(tile / 8) * tileSize;
+				
+				sourceRect.setTo(tilesetX, tilesetY, tileSize, tileSize);
+				destPoint.setTo(x * tileSize, y * tileSize);
+				
+				sprite.graphic.bitmap.copyPixels(tilemap.graphic.bitmap, sourceRect, destPoint, null, null, true);
+			}
+		}
+		
+		return sprite;
 	}
 
 	/**
@@ -772,6 +812,9 @@ class PlayState extends FlxState
 		{
 			itemGroup.clear();
 		}*/
+		
+		
+		waterSprite.setPosition(water.x, water.y);
 		
 		super.update(elapsed);
 	}
