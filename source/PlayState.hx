@@ -325,9 +325,9 @@ class PlayState extends FlxState
 		FlxG.watch.add(this, "lastJumpDelay");
 		//FlxG.debugger.drawDebug = true;
 		
-#if !flash
+/*#if !flash
 		FlxG.stage.opaqueBackground = FlxG.camera.bgColor;
-#end
+#end*/
 		
 		FlxG.sound.muteKeys.push(FlxKey.M);
 	}
