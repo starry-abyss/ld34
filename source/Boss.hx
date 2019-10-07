@@ -83,8 +83,8 @@ class Boss extends FlxSprite
 	{
 		attackTimer.cancel();
 		
-		FlxDestroyUtil.destroy(soundBossattack1);
-		FlxDestroyUtil.destroy(soundBossattack2);
+		//FlxDestroyUtil.destroy(soundBossattack1);
+		//FlxDestroyUtil.destroy(soundBossattack2);
 		
 		super.destroy();
 	}

@@ -12,12 +12,18 @@ class Bird extends FlxSprite
 	
 	var speed: Float = 0.5;
 
-	public function new(x: Float, y: Float) 
+	public function new(x: Float, y: Float, rotateAnimation:Int) 
 	{
 		super(x, y);
 		
 		loadGraphic("assets/images/bird.png", true, 10, 15);
-		animation.add("fly", [1, 0, 3, 2, 3, 0, 1, 0, 3, 2, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 7, true);
+		if (rotateAnimation == 1)
+			animation.add("fly", [0, 1, 0, 3, 2, 3, 0, 1, 0, 3, 2, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0], 7, true);
+		else if (rotateAnimation == 2)
+			animation.add("fly", [0, 3, 2, 3, 0, 1, 0, 3, 2, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], 7, true);
+		else
+			animation.add("fly", [1, 0, 3, 2, 3, 0, 1, 0, 3, 2, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 7, true);
+		
 		animation.play("fly");
 	}
 	

@@ -17,11 +17,14 @@ import flixel.system.scaleModes.RatioScaleMode;
 import flixel.tile.FlxTilemap;
 import flixel.tweens.FlxTween;
 import flixel.tweens.FlxEase;
+import flixel.util.FlxColor;
 import flixel.util.FlxDestroyUtil;
 import flixel.util.FlxStringUtil;
 import haxe.Timer;
 import openfl.Assets;
 import flixel.util.FlxTimer;
+import openfl.geom.Point;
+import openfl.geom.Rectangle;
 //import flixel.util.FlxMath;
 
 /**
@@ -61,10 +64,12 @@ class PlayState extends FlxState
 	
 	function startMusic():Void
 	{
-		music = FlxG.sound.load("assets/music/track1.mp3");
+#if !flash
+		music = FlxG.sound.load("assets/music/track1.ogg");
 		//FlxG.sound.playMusic(music, 1, true);
 		music.looped = true;
 		music.play();
+#end
 	}
 	
 	var music: FlxSound;
@@ -72,7 +77,9 @@ class PlayState extends FlxState
 	var player: FlxSprite;
 	var revivor: FlxSprite;
 	var level: FlxTilemap;
+	var levelSprite: FlxSprite;
 	var water: FlxTilemap;
+	var waterSprite: FlxSprite;
 	var background: FlxSprite;
 	var itemGroup: FlxGroup;
 	var bossGroup: FlxGroup;
@@ -118,10 +125,11 @@ class PlayState extends FlxState
 	var birdGroup: FlxGroup;
 	var birdRandomizer: FlxRandom;
 	
-	var keysLeft: Array<FlxKey> = ["A", "LEFT"];
-	var keysRight: Array<FlxKey> = ["D", "RIGHT"];
-	var keysJumpClassic: Array<FlxKey> = ["W", "UP"];
-	var classicControls = false;
+	// also support dvorak and azerty
+	var keysLeft: Array<FlxKey> = ["LEFT", "A", "C", "Q"];
+	var keysRight: Array<FlxKey> = ["RIGHT", "D", "V", "E"];
+	var keysJumpClassic: Array<FlxKey> = ["SPACE", "UP", "W", "Z", "COMMA"];
+	static var classicControls = false;
 	
 	var lastJumpStartTime = 0.0;
 	var lastJumpDelay = 0.0;
@@ -269,20 +277,29 @@ class PlayState extends FlxState
 		birdGroup = new FlxGroup();
 		for (i in 0...15)
 		{
-			var bird: Bird = new Bird(birdRandomizer.float(0, 400), birdOffset + birdRandomizer.float(-100, -70));
+			var bird: Bird = new Bird(birdRandomizer.float(0, 400), birdOffset + birdRandomizer.float( -100, -70), birdRandomizer.int(0, 2));
 			bird.scrollFactor.y = 0.5;
 			birdGroup.add(bird);
 		}
 		
 		
+		// workaround for ugly tilemap seams
+		levelSprite = tilemapToSprite(level);
+		waterSprite = tilemapToSprite(water);
+		
+		
 		add(background);
 		add(birdGroup);
 		add(level);
+		level.visible = false;
+		add(levelSprite);
 		add(player);
 		add(itemGroup);
 		add(bossGroup);
 		add(bulletGroup);
 		add(water);
+		water.visible = false;
+		add(waterSprite);
 		
 		//FlxG.camera.zoom = 2;
 		
@@ -307,6 +324,38 @@ class PlayState extends FlxState
 		FlxG.watch.add(player, "y");
 		FlxG.watch.add(this, "lastJumpDelay");
 		//FlxG.debugger.drawDebug = true;
+		
+/*#if !flash
+		FlxG.stage.opaqueBackground = FlxG.camera.bgColor;
+#end*/
+		
+		FlxG.sound.muteKeys.push(FlxKey.M);
+	}
+	
+	function tilemapToSprite(tilemap:FlxTilemap):FlxSprite
+	{
+		var sprite:FlxSprite = new FlxSprite(tilemap.x, tilemap.y);
+		sprite.makeGraphic(Math.floor(tilemap.width), Math.floor(tilemap.height), FlxColor.TRANSPARENT, true);
+		
+		var sourceRect = new Rectangle();
+		var destPoint = new Point();
+		
+		for (y in 0...tilemap.heightInTiles)
+		{
+			for (x in 0...tilemap.widthInTiles)
+			{
+				var tile = tilemap.getTile(x, y);
+				var tilesetX = Math.floor(tile % 8) * tileSize;
+				var tilesetY = Math.floor(tile / 8) * tileSize;
+				
+				sourceRect.setTo(tilesetX, tilesetY, tileSize, tileSize);
+				destPoint.setTo(x * tileSize, y * tileSize);
+				
+				sprite.graphic.bitmap.copyPixels(tilemap.graphic.bitmap, sourceRect, destPoint, null, null, true);
+			}
+		}
+		
+		return sprite;
 	}
 
 	/**
@@ -315,9 +364,9 @@ class PlayState extends FlxState
 	 */
 	override public function destroy():Void
 	{
-		FlxDestroyUtil.destroy(soundItemtake);
-		FlxDestroyUtil.destroy(soundBossdeath);
-		FlxDestroyUtil.destroy(soundRevive);
+		//FlxDestroyUtil.destroy(soundItemtake);
+		//FlxDestroyUtil.destroy(soundBossdeath);
+		//FlxDestroyUtil.destroy(soundRevive);
 		
 		super.destroy();
 	}
@@ -496,8 +545,8 @@ class PlayState extends FlxState
 		}
 		Reg.save.data.bossPosArray = bossPosArray;
 		
-		
-		Reg.save.flush();
+		// TODO: don't need to flush, as inter-session loading is not supported anyway
+		//Reg.save.flush();
 		
 		weHaveSavegame = true;
 	}
@@ -551,6 +600,9 @@ class PlayState extends FlxState
 	{
 		// colliding on Y axis by acceleration, setting flags for jumping
 		FlxG.collide(player, level);
+		
+		if (FlxG.keys.justPressed.TAB)
+			classicControls = !classicControls;
 		
 		if (disableControls)
 		{
@@ -721,7 +773,6 @@ class PlayState extends FlxState
 			timeJumpStarted = Math.NEGATIVE_INFINITY;
 			jumpTween.;
 		}*/
-		//FlxG.pixelPerfect
 		
 		/*FlxG.camera.x = player.x;
 		FlxG.camera.y = water.y;*/
@@ -761,6 +812,9 @@ class PlayState extends FlxState
 		{
 			itemGroup.clear();
 		}*/
+		
+		
+		waterSprite.setPosition(water.x, water.y);
 		
 		super.update(elapsed);
 	}
