@@ -64,12 +64,10 @@ class PlayState extends FlxState
 	
 	function startMusic():Void
 	{
-#if !flash
-		music = FlxG.sound.load("assets/music/track1.ogg");
+		music = FlxG.sound.load("assets/music/track1.mp3");
 		//FlxG.sound.playMusic(music, 1, true);
 		music.looped = true;
 		music.play();
-#end
 	}
 	
 	var music: FlxSound;
