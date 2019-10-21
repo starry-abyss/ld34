@@ -382,7 +382,7 @@ class PlayState extends FlxState
 		if (!jumping)
 		{
 			jumping = true;
-			jumpTween = FlxTween.tween(player, { y: player.y - jumpHeight }, jumpLength, { onComplete: jumpTweenEnded, type:FlxTween.PINGPONG, ease:FlxEase.circInOut } );
+			jumpTween = FlxTween.tween(player, { y: player.y - jumpHeight }, jumpLength, { onComplete: jumpTweenEnded, type:FlxTweenType.PINGPONG, ease:FlxEase.circInOut } );
 			//timeJumpStarted = FlxGame.;
 			/*timerJump.active = true;
 			timerJump.start();*/
@@ -443,7 +443,7 @@ class PlayState extends FlxState
 		
 		disableControls = true;
 		
-		waterTween = FlxTween.tween(water, { y: water.y + levelGrowHeight }, levelGrowLength, { onComplete: growLevelEnded, onUpdate: growLevelUpdate, type:FlxTween.ONESHOT } );
+		waterTween = FlxTween.tween(water, { y: water.y + levelGrowHeight }, levelGrowLength, { onComplete: growLevelEnded, onUpdate: growLevelUpdate, type:FlxTweenType.ONESHOT } );
 		FlxG.camera.shake(0.01, levelGrowLength, null, true, X);
 		
 		updateCameraBounds();
