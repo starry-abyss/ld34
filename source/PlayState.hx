@@ -173,8 +173,8 @@ class PlayState extends FlxState
 		
 		var levelColors: Array<Int> = [ 0x7dc1ff, 0x9e5400, 0xfff740, 0x4c2b06, 0xfd0003, 0x0e0904, 0x8c8c8c, 0xefffe7, 0x196800, 0x8aff50, 0xe67a00, 0x7c5400, 0x9e7a00, 0xc52eca ];
 		level = new FlxTilemap();
-		var bitMapData = Assets.getBitmapData(levelName);
-		level.loadMapFromCSV(FlxStringUtil.bitmapToCSV(bitMapData, false, 1, levelColors), "assets/images/tileset.png", tileSize, tileSize);
+		
+		level.loadMapFromCSV(Assets.getText(levelName + ".csv"), "assets/images/tileset.png", tileSize, tileSize);
 
 		
 		// empty
